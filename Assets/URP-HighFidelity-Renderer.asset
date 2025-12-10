@@ -52,7 +52,8 @@ MonoBehaviour:
     hdrDebugViewPS: {fileID: 4800000, guid: 573620ae32aec764abd4d728906d2587, type: 3}
   m_RendererFeatures:
   - {fileID: -1878332245247344467}
-  m_RendererFeatureMap: adc0de57c6d2eee5
+  - {fileID: 271915594719019773}
+  m_RendererFeatureMap: adc0de57c6d2eee5fdc21df0ca09c603
   m_UseNativeRenderPass: 0
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
   xrSystemData: {fileID: 11400000, guid: 60e1133243b97e347b653163a8c01b64, type: 2}
@@ -91,3 +92,22 @@ MonoBehaviour:
   m_CopyDepthMode: 0
   m_AccurateGbufferNormals: 0
   m_IntermediateTextureMode: 1
+--- !u!114 &271915594719019773
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f3007d62cf9109149b7745624b4ca8f5, type: 3}
+  m_Name: OutlineMaskAndPostFeature
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  settings:
+    maskOverrideMaterial: {fileID: 2100000, guid: 123dc786994c7ef46bfb3a5cc2b7730f, type: 2}
+    outlineCompositeMaterial: {fileID: 2100000, guid: e4106c025e82b714c8d49a391fc4f377, type: 2}
+    outlineColor: {r: 1, g: 0.8942358, b: 0.58805025, a: 1}
+    edgeStrength: 1
+    outlineWidth: 3
