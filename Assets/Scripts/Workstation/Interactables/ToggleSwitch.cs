@@ -32,7 +32,7 @@ public class ToggleSwitch : BaseInteractable
     {
         base.Start();
 
-        // 1. Capture the initial rotation of the visual mesh
+        // Capture the initial rotation of the visual mesh
         if (switchMesh != null)
         {
             _defaultRotation = switchMesh.localRotation;
@@ -64,10 +64,11 @@ public class ToggleSwitch : BaseInteractable
 
         UpdateVisuals();
 
+        OnToggle?.Invoke(isOn);
+
         if (!silent)
         {
             PlaySound(isOn ? 0 : 1);
-            OnToggle?.Invoke(isOn);
 
             // Handle Linked Radio Buttons
             if (isOn && linkedToggles.Count > 0)
@@ -76,7 +77,7 @@ public class ToggleSwitch : BaseInteractable
                 {
                     if (toggle != this && toggle.isOn)
                     {
-                        // Turn others off silently so we don't spam events/sounds
+                        // Turn others off silently so we don't spam sounds
                         toggle.SetState(false, true);
                     }
                 }
@@ -96,7 +97,7 @@ public class ToggleSwitch : BaseInteractable
             case RotationAxis.Z: axisVector = Vector3.forward; break;
         }
 
-        // 2. Rotate relative to the default rotation
+        // Rotate relative to the default rotation
         // We calculate the target offset angle (e.g. +45 or -45)
         float targetAngle = isOn ? onAngle : offAngle;
 

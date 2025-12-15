@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Networking;
 
+// TEMPORARY DEMO CLASS
 public class WorkstationUI : MonoBehaviour
 {
     [Header("Server API")]
@@ -15,6 +16,14 @@ public class WorkstationUI : MonoBehaviour
     [SerializeField] private TMP_Text percentageText;
     [SerializeField] private TMP_Text valueText;
     [SerializeField] private TMP_Text statusText; // For error/success messages
+
+    [Header("Nixie Refernces")]
+    [SerializeField] private TMP_Text temperatureText;
+    [SerializeField] private TMP_Text flowText;
+    [SerializeField] private TMP_Text rpmText;
+    [SerializeField] private TMP_Text voltageText;
+
+    private bool setCharging = true; // is the game set-up for charge/discharge ?
 
     private void Start()
     {
@@ -51,18 +60,50 @@ public class WorkstationUI : MonoBehaviour
         //batteryGauge.color = fillAmount < 0.2f ? Color.red : Color.green;
     }
 
+    public void UpdateNixie(TaskData nixieData)
+    {
+        if (nixieData.IsTempHigh)
+            temperatureText.text = Random.Range(350, 550).ToString();
+        else
+            temperatureText.text = Random.Range(150, 349).ToString();
+
+        if (nixieData.IsFlowHigh)
+            flowText.text = "STBL";
+        else
+            flowText.text = "UNST";
+
+        if (nixieData.IsRPMHigh)
+            rpmText.text = Random.Range(3000, 5000).ToString();
+        else
+            rpmText.text = Random.Range(1000, 2999).ToString();
+
+        if (nixieData.IsVoltageHigh)
+            voltageText.text = Random.Range(230, 300).ToString();
+        else
+            voltageText.text = Random.Range(110, 229).ToString();
+    }
+
     // --- BUTTON HANDLERS ---
 
     // Hook this to the "Charge 400Wh" Button
     public void OnChargeButtonClicked()
     {
-        StartCoroutine(SendChargeRequest(400));
+        setCharging = true;
     }
 
     // Hook this to the "Discharge 300Wh" Button
     public void OnDischargeButtonClicked()
     {
-        StartCoroutine(SendChargeRequest(-300));
+        setCharging = false;
+    }
+
+    public void OnCompleteGameClick()
+    {
+        int amount = 300;
+        if (!setCharging)
+            amount *= -1;
+
+        StartCoroutine(SendChargeRequest(amount));
     }
 
     private IEnumerator SendChargeRequest(int amount)
