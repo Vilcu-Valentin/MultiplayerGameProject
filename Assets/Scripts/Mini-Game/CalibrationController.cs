@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using UnityEditor.ShaderGraph;
 
 public class CalibrationController : MonoBehaviour
 {
@@ -21,6 +22,10 @@ public class CalibrationController : MonoBehaviour
     [SerializeField] private Sprite iconCapacitor;
     [SerializeField] private Sprite iconInductor;
     [SerializeField] private Sprite iconUnknown;
+
+    [SerializeField] private Color tubeColor;
+    [SerializeField] private Color capacitorColor;
+    [SerializeField] private Color inductorColor;
 
     [Header("Settings")]
     [SerializeField] private float stabilityBonus = 0.3f; // Jitter reduced to 30%
@@ -209,6 +214,7 @@ public class CalibrationController : MonoBehaviour
         {
             recipeIcons[i].gameObject.SetActive(true);
             recipeIcons[i].sprite = GetSprite(recipe[i]);
+            recipeIcons[i].color = GetColor(recipe[i]);
         }
     }
 
@@ -225,6 +231,17 @@ public class CalibrationController : MonoBehaviour
             case Item.ItemType.Capacitor: return iconCapacitor;
             case Item.ItemType.Inductor: return iconInductor;
             default: return iconUnknown;
+        }
+    }
+
+    private Color GetColor(Item.ItemType type)
+    {
+        switch (type)
+        {
+            case Item.ItemType.VacuumTube: return tubeColor;
+            case Item.ItemType.Capacitor: return capacitorColor;
+            case Item.ItemType.Inductor: return inductorColor;
+            default: return Color.white;
         }
     }
 }

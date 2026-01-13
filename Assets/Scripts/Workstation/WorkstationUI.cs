@@ -19,6 +19,7 @@ public class WorkstationUI : MonoBehaviour
     [Header("Info Display")]
     [SerializeField] private TMP_Text clockText;
     [SerializeField] private SplitFlapDisplay daysSurvivedText;
+    [SerializeField] private Slider dayProgress;
 
     [Header("Nixie References")]
     [SerializeField] private TMP_Text temperatureText;
@@ -117,6 +118,11 @@ public class WorkstationUI : MonoBehaviour
 
         if (clockText) clockText.text = state.ServerTime;
         if (daysSurvivedText) daysSurvivedText.SetText($"DAYS SURVIVED: {state.DaysSurvived}");
+        if (dayProgress && System.DateTime.TryParse(state.ServerTime, out System.DateTime t))
+        {
+            // (Hours * 60) + Minutes / Total Minutes in Day (1440)
+            dayProgress.value = ((t.Hour * 60f) + t.Minute) / 1440f;
+        }
     }
 
     // 3. MiniGame Logic Updates (Called by MiniGameManager)
@@ -127,6 +133,14 @@ public class WorkstationUI : MonoBehaviour
         flowText.text = nixieData.IsFlowHigh ? "STBL" : "UNST";
         rpmText.text = nixieData.IsRPMHigh ? Random.Range(3000, 5000).ToString() : Random.Range(1000, 2999).ToString();
         voltageText.text = nixieData.IsVoltageHigh ? Random.Range(230, 300).ToString() : Random.Range(110, 229).ToString();
+    }
+
+    public void ResetNixie()
+    {
+        temperatureText.text = "----";
+        flowText.text = "----";
+        rpmText.text = "----";
+        voltageText.text = "----";
     }
 
     private void HandleLiveReset(WorldResetDto data)

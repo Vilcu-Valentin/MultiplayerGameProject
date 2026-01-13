@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 public class StackDispenser : DispenserBase
@@ -7,10 +8,12 @@ public class StackDispenser : DispenserBase
     [Header("Stack Settings")]
     [SerializeField] private int capacity = 5;
     [SerializeField] private List<Item> itemStack = new List<Item>();
+    [SerializeField] private TMP_Text amountText;
 
     [Header("Hover Animation")]
     [SerializeField] private float pushBackDistance = 0.2f;
-    [SerializeField] private float animationSpeed = 10f; // Faster speed for snappy feel
+    [SerializeField] private float animationSpeed = 10f; 
+
 
     private Coroutine _hoverRoutine;
     private bool _isHoveringWithItem;
@@ -21,6 +24,14 @@ public class StackDispenser : DispenserBase
         targetSocket.OnManualInteract.AddListener(OnSocketClicked);
         targetSocket.OnHoverStart.AddListener(OnHoverEnter);
         targetSocket.OnHoverEnd.AddListener(OnHoverExit);
+
+        UpdateText(); 
+    }
+
+    private void UpdateText()
+    {
+        if (amountText != null)
+            amountText.text = $"{itemStack.Count}/{capacity}";
     }
 
     private void OnSocketClicked()
@@ -39,6 +50,9 @@ public class StackDispenser : DispenserBase
             {
                 Item nextItem = itemStack[itemStack.Count - 1];
                 itemStack.RemoveAt(itemStack.Count - 1);
+
+                UpdateText();
+
                 nextItem.gameObject.SetActive(true);
                 StartCoroutine(AnimateToSocket(nextItem));
             }
@@ -57,13 +71,14 @@ public class StackDispenser : DispenserBase
                 // PUSH INTO STACK
                 Item itemToStack = targetSocket.HeldItem;
 
-                // Stop any hover animation on this item before moving it
                 if (_hoverRoutine != null) StopCoroutine(_hoverRoutine);
 
                 StartCoroutine(AnimateFromSocket(itemToStack, () =>
                 {
                     itemStack.Add(itemToStack);
                     itemToStack.gameObject.SetActive(false);
+
+                    UpdateText();
                 }));
 
                 targetSocket.PlaceItem(hand.RemoveItem());
@@ -72,12 +87,13 @@ public class StackDispenser : DispenserBase
             {
                 // SWAP (Stack Full)
                 Item returnItem = targetSocket.RemoveItem();
-                // Ensure return item is reset to zero just in case hover moved it
                 returnItem.transform.localPosition = Vector3.zero;
 
                 Item handItem = hand.RemoveItem();
                 hand.EquipItem(returnItem);
                 targetSocket.PlaceItem(handItem);
+
+                UpdateText();
             }
         }
     }

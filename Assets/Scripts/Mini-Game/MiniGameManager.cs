@@ -159,6 +159,11 @@ public class MiniGameManager : MonoBehaviour
             waveGame.StopAndReset();
         }
 
+        if(workstation != null)
+        {
+            workstation.ResetNixie();
+        }
+
         Debug.Log($"Game Over! Submitting to server... Completed: {_tasksCompleted} (Bonus: {_bonusTasks})");
         StartCoroutine(SubmitResultRoutine());
     }
