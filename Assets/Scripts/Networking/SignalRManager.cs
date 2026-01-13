@@ -14,6 +14,7 @@ public class SignalRManager : MonoBehaviour
 
     // Event that UI scripts can subscribe to
     public event Action<WorldStateDto> OnGameStateReceived;
+    public event Action<WorldResetDto> OnWorldReset;
 
     private void Awake()
     {
@@ -63,6 +64,15 @@ public class SignalRManager : MonoBehaviour
             {
                 Debug.Log($"[SignalR] Received Update: {state.CurrentWh}/{state.MaxWh}");
                 OnGameStateReceived?.Invoke(state);
+            });
+        });
+
+        _connection.On<WorldResetDto>("OnWorldReset", (resetData) =>
+        {
+            MainThreadDispatcher.Instance.Enqueue(() =>
+            {
+                Debug.Log($"<color=red>GAME OVER RECEIVED! Reason: {resetData.reason}</color>");
+                OnWorldReset?.Invoke(resetData);
             });
         });
 

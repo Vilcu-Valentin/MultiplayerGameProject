@@ -1,0 +1,63 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 022029f83a4c4724b81f1aba2e6f038e, type: 3}
+  m_Name: VennResolver
+  m_EditorClassIdentifier: 
+  entries:
+  - debugName: 0000
+    letterIndex: 0
+    numberIndex: 0
+  - debugName: 0001
+    letterIndex: 1
+    numberIndex: 0
+  - debugName: 0010
+    letterIndex: 2
+    numberIndex: 1
+  - debugName: 0011
+    letterIndex: 3
+    numberIndex: 3
+  - debugName: 0100
+    letterIndex: 4
+    numberIndex: 5
+  - debugName: 0101
+    letterIndex: 0
+    numberIndex: 3
+  - debugName: 0110
+    letterIndex: 1
+    numberIndex: 3
+  - debugName: 0111
+    letterIndex: 2
+    numberIndex: 2
+  - debugName: 1000
+    letterIndex: 3
+    numberIndex: 0
+  - debugName: 1001
+    letterIndex: 4
+    numberIndex: 2
+  - debugName: 1010
+    letterIndex: 5
+    numberIndex: 1
+  - debugName: 1011
+    letterIndex: 0
+    numberIndex: 5
+  - debugName: 1100
+    letterIndex: 1
+    numberIndex: 4
+  - debugName: 1101
+    letterIndex: 2
+    numberIndex: 3
+  - debugName: 1110
+    letterIndex: 3
+    numberIndex: 4
+  - debugName: 1111
+    letterIndex: 5
+    numberIndex: 3

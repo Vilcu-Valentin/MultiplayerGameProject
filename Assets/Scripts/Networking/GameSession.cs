@@ -12,6 +12,10 @@ public class GameSession : MonoBehaviour
     public string AuthToken;
     public string Username;
     public int PlayerId; // Optional: if you want to store ID later
+    public long TotalContribution;
+    public int LoginStreak;
+
+    public GameOverReport PendingReport;
 
     private void Awake()
     {
@@ -29,6 +33,11 @@ public class GameSession : MonoBehaviour
         }
     }
 
+    public void AddContribution(long amount)
+    {
+        TotalContribution += amount;
+    }
+
     /// <summary>
     /// Clears session data (use this for Logout)
     /// </summary>
@@ -37,5 +46,15 @@ public class GameSession : MonoBehaviour
         AuthToken = null;
         Username = null;
         PlayerId = 0;
+        PendingReport = null;
     }
+}
+
+[System.Serializable]
+public class GameOverReport
+{
+    public string type;
+    public string reason;
+    public int daysSurvived;
+    public string dateEnded; // Unity can't parse DateTime automatically from JSON, string is safer
 }

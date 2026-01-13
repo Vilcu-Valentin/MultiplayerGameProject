@@ -9,18 +9,26 @@ public class SplitFlapDisplay : MonoBehaviour
     [SerializeField] private int numberOfUnits = 10;
 
     [Header("Layout")]
-    [SerializeField] private float spacing = 0.5f; // Distance between units
-    [SerializeField] private float unitScale = 1.0f; // Scale of the units
+    [SerializeField] private float spacing = 0.5f;
+    [SerializeField] private float unitScale = 1.0f;
 
     [Header("Animation Settings")]
-    [SerializeField] private int minCycles = 3; // Minimum random flips before stopping
-    [SerializeField] private int maxCycles = 6; // Maximum random flips
-    [SerializeField] private float cascadeDelay = 0.05f; // Delay between the 1st and 2nd letter starting
+    [SerializeField] private int minCycles = 3;
+    [SerializeField] private int maxCycles = 6;
+    [SerializeField] private float cascadeDelay = 0.05f;
 
-    // The characters the board can cycle through for the "random" effect
     private const string VALID_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 -.:";
 
     private List<SplitFlapUnit> _units = new List<SplitFlapUnit>();
+
+    // Track the COROUTINE running on each specific unit
+    private Coroutine[] _activeUnitCoroutines;
+
+    // Track what the unit is trying to become (if animating) or is currently (if idle)
+    private char[] _intendedState;
+
+    // Track the main cascading loop
+    private Coroutine _cascadeCoroutine;
 
     private void Start()
     {
@@ -29,20 +37,15 @@ public class SplitFlapDisplay : MonoBehaviour
 
     private void GenerateBoard()
     {
-        // Clear existing children if any (mostly for editor safety)
-        foreach (Transform child in transform)
-        {
-            Destroy(child.gameObject);
-        }
+        foreach (Transform child in transform) Destroy(child.gameObject);
         _units.Clear();
 
-        // Spawn Units
+        _activeUnitCoroutines = new Coroutine[numberOfUnits];
+        _intendedState = new char[numberOfUnits];
+
         for (int i = 0; i < numberOfUnits; i++)
         {
             GameObject obj = Instantiate(unitPrefab, transform);
-
-            // Positioning (Horizontal)
-            // Assumes the prefab is centered. We move them along local X.
             float xPos = i * spacing;
             obj.transform.localPosition = new Vector3(xPos, 0, 0);
             obj.transform.localScale = Vector3.one * unitScale;
@@ -50,8 +53,9 @@ public class SplitFlapDisplay : MonoBehaviour
             SplitFlapUnit unit = obj.GetComponent<SplitFlapUnit>();
             if (unit != null)
             {
-                // Set initial text to empty space or a dash
+                // Initialize visuals and state to Empty
                 unit.UpdateAllText(' ');
+                _intendedState[i] = ' ';
                 _units.Add(unit);
             }
         }
@@ -59,22 +63,18 @@ public class SplitFlapDisplay : MonoBehaviour
 
     public void SetText(string message)
     {
-        // 1. Sanitize and Pad the string
+        if (message == null) message = "";
         message = message.ToUpper();
 
-        // If message is shorter than board, pad with spaces
-        if (message.Length < numberOfUnits)
-        {
-            message = message.PadRight(numberOfUnits);
-        }
-        // If message is longer, truncate
-        else if (message.Length > numberOfUnits)
-        {
-            message = message.Substring(0, numberOfUnits);
-        }
+        if (message.Length < numberOfUnits) message = message.PadRight(numberOfUnits);
+        else if (message.Length > numberOfUnits) message = message.Substring(0, numberOfUnits);
 
-        // 2. Trigger the animations
-        StartCoroutine(AnimateBoardRoutine(message));
+        // 1. Stop the MAIN cascade loop.
+        // This prevents units further down the line from starting to animate to the OLD text.
+        if (_cascadeCoroutine != null) StopCoroutine(_cascadeCoroutine);
+
+        // 2. Start a new cascade loop
+        _cascadeCoroutine = StartCoroutine(AnimateBoardRoutine(message));
     }
 
     private IEnumerator AnimateBoardRoutine(string message)
@@ -82,51 +82,48 @@ public class SplitFlapDisplay : MonoBehaviour
         for (int i = 0; i < _units.Count; i++)
         {
             char targetChar = message[i];
-            SplitFlapUnit unit = _units[i];
 
-            // Start the individual unit's cycle routine
-            StartCoroutine(CycleUnitRoutine(unit, targetChar));
+            // Check if this unit actually NEEDS to change.
+            // If the unit is already assigned this character (either it's finished showing it,
+            // OR it is currently animating towards it), we skip it.
+            // This prevents "jitter" if you type "HELLO" and then "HELLO" again quickly.
+            if (_intendedState[i] == targetChar) continue;
 
-            // Small delay before starting the next neighbor (The Cascade Effect)
-            if (cascadeDelay > 0)
+            // Update our "Intended" state immediately.
+            // This marks the unit as "Busy handling this character".
+            _intendedState[i] = targetChar;
+
+            // If an animation is currently running on THIS specific unit, stop it.
+            // This cleans up the "Gibberish" from the interrupted animation.
+            if (_activeUnitCoroutines[i] != null)
             {
-                yield return new WaitForSeconds(cascadeDelay);
+                StopCoroutine(_activeUnitCoroutines[i]);
             }
+
+            // Start the new animation and track it
+            SplitFlapUnit unit = _units[i];
+            _activeUnitCoroutines[i] = StartCoroutine(CycleUnitRoutine(unit, targetChar, i));
+
+            if (cascadeDelay > 0) yield return new WaitForSeconds(cascadeDelay);
         }
     }
 
-    private IEnumerator CycleUnitRoutine(SplitFlapUnit unit, char finalChar)
+    private IEnumerator CycleUnitRoutine(SplitFlapUnit unit, char finalChar, int index)
     {
-        // Determine how many times this specific unit will "flicker"
         int cycles = Random.Range(minCycles, maxCycles);
+        float waitTime = unit.flipDuration + 0.02f;
 
-        // We need to know how fast the unit flips to sync our commands
-        float waitTime = unit.flipDuration; // Ensure flipDuration is PUBLIC in SplitFlapUnit
-
-        for (int i = 0; i < cycles; i++)
+        for (int c = 0; c < cycles; c++)
         {
-            // Pick a random character for the effect
             char randomChar = VALID_CHARS[Random.Range(0, VALID_CHARS.Length)];
-
             unit.FlipTo(randomChar);
-
-            // Wait for the flip to finish before sending the next one
             yield return new WaitForSeconds(waitTime);
         }
 
-        // Finally, land on the correct character
+        // Set final character
         unit.FlipTo(finalChar);
-    }
 
-    public void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            SetText(testString);
-        }
+        // Mark this coroutine as finished in our tracker
+        _activeUnitCoroutines[index] = null;
     }
-
-    // Debug Testing
-    [Header("Debug")]
-    public string testString = "HELLO WORLD";
 }

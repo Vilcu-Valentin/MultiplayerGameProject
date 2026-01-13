@@ -4,6 +4,8 @@ using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement; // Required for changing scenes
 using TMPro;
+using Cinemachine;
+using Unity.VisualScripting;
 
 public class AuthManager : MonoBehaviour
 {
@@ -22,6 +24,11 @@ public class AuthManager : MonoBehaviour
     [SerializeField] private TMP_InputField passwordInput;
     [SerializeField] private TMP_Text messageText;
 
+    [Header("Colors")]
+    [SerializeField] private Color defaultColor;
+    [SerializeField] private Color successColor;
+    [SerializeField] private Color errorColor;
+
     [System.Serializable]
     private class RegisterPayload
     {
@@ -33,6 +40,10 @@ public class AuthManager : MonoBehaviour
     private class LoginResponse
     {
         public string token;
+        public string username;
+        public GameOverReport notification;
+        public long totalContribution;
+        public int loginStreak;
     }
 
     // --- REGISTER LOGIC ---
@@ -43,7 +54,7 @@ public class AuthManager : MonoBehaviour
         if (string.IsNullOrEmpty(usernameInput.text) || string.IsNullOrEmpty(passwordInput.text))
         {
             messageText.text = "Username and password cannot be empty.";
-            messageText.color = Color.red;
+            messageText.color = errorColor;
             return;
         }
         StartCoroutine(RegisterCoroutine());
@@ -52,7 +63,7 @@ public class AuthManager : MonoBehaviour
     private IEnumerator RegisterCoroutine()
     {
         messageText.text = "Registering...";
-        messageText.color = Color.white;
+        messageText.color = defaultColor;
 
         RegisterPayload payload = new RegisterPayload { username = usernameInput.text, password = passwordInput.text };
         byte[] bodyRaw = Encoding.UTF8.GetBytes(JsonUtility.ToJson(payload));
@@ -70,17 +81,17 @@ public class AuthManager : MonoBehaviour
 
             if (uwr.result == UnityWebRequest.Result.ProtocolError)
             {
-                if (uwr.responseCode == 400) { messageText.text = "Username taken"; messageText.color = Color.red; }
-                else { messageText.text = "Error: " + uwr.responseCode; messageText.color = Color.red; }
+                if (uwr.responseCode == 400) { messageText.text = "Username taken"; messageText.color = errorColor; }
+                else { messageText.text = "Error: " + uwr.responseCode; messageText.color = errorColor; }
             }
             else if (uwr.result == UnityWebRequest.Result.ConnectionError)
             {
-                messageText.text = "Connection Error."; messageText.color = Color.red;
+                messageText.text = "Connection Error."; messageText.color = errorColor;
             }
             else if (uwr.responseCode == 201)
             {
                 messageText.text = "Success! You can now log in.";
-                messageText.color = Color.green;
+                messageText.color = successColor;
             }
         }
     }
@@ -93,7 +104,7 @@ public class AuthManager : MonoBehaviour
         if (string.IsNullOrEmpty(usernameInput.text) || string.IsNullOrEmpty(passwordInput.text))
         {
             messageText.text = "Username and password cannot be empty.";
-            messageText.color = Color.red;
+            messageText.color = errorColor;
             return;
         }
         StartCoroutine(LoginCoroutine());
@@ -102,7 +113,7 @@ public class AuthManager : MonoBehaviour
     private IEnumerator LoginCoroutine()
     {
         messageText.text = "Logging in...";
-        messageText.color = Color.white;
+        messageText.color = defaultColor;
 
         RegisterPayload payload = new RegisterPayload { username = usernameInput.text, password = passwordInput.text };
         byte[] bodyRaw = Encoding.UTF8.GetBytes(JsonUtility.ToJson(payload));
@@ -122,18 +133,18 @@ public class AuthManager : MonoBehaviour
                 if (uwr.responseCode == 401)
                 {
                     messageText.text = "Invalid username or password";
-                    messageText.color = Color.red;
+                    messageText.color = errorColor;
                 }
                 else
                 {
                     messageText.text = "Server Error: " + uwr.responseCode;
-                    messageText.color = Color.red;
+                    messageText.color = errorColor;
                 }
             }
             else if (uwr.result == UnityWebRequest.Result.ConnectionError)
             {
                 messageText.text = "Connection Error.";
-                messageText.color = Color.red;
+                messageText.color = errorColor;
             }
             else if (uwr.responseCode == 200)
             {
@@ -145,24 +156,44 @@ public class AuthManager : MonoBehaviour
                 if (GameSession.Instance != null)
                 {
                     GameSession.Instance.AuthToken = responseData.token;
-                    GameSession.Instance.Username = usernameInput.text;
+                    GameSession.Instance.Username = responseData.username;
+                    GameSession.Instance.TotalContribution = responseData.totalContribution;
+                    GameSession.Instance.LoginStreak = responseData.loginStreak;
+
+                    // --- THE FIX STARTS HERE ---
+
+                    // Explicitly overwrite the PendingReport. 
+                    // If responseData.notification is null, this clears the old report.
+                    GameSession.Instance.PendingReport = responseData.notification;
+
+                    // Optional: Log it for debugging
+                    if (responseData.notification != null && !string.IsNullOrEmpty(responseData.notification.type))
+                    {
+                        Debug.Log("Game Over Report Received!");
+                    }
+                    else
+                    {
+                        Debug.Log("No Game Over Report received. (Clean login)");
+                    }
+                    // --- THE FIX ENDS HERE ---
 
                     messageText.text = "Success! Loading...";
-                    messageText.color = Color.green;
+                    messageText.color = successColor;
 
-                    Debug.Log($"Token saved: {responseData.token.Substring(0, 10)}...");
-
-                    // 3. Change Scene
-                    // Make sure "WorkstationScene" is added in File -> Build Settings
                     SceneManager.LoadScene("WorkstationScene");
                 }
                 else
                 {
                     Debug.LogError("GameSession instance not found! Did you create the GameSession object in the scene?");
                     messageText.text = "Internal Error: Session Missing";
-                    messageText.color = Color.red;
+                    messageText.color = errorColor;
                 }
             }
         }
+    }
+
+    public void Quit()
+    {
+        Application.Quit();
     }
 }

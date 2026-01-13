@@ -23,6 +23,8 @@ public class ToggleSwitch : BaseInteractable
 
     [Header("Events")]
     public UnityEvent<bool> OnToggle;
+    public UnityEvent OnTurnOn;
+    public UnityEvent OnTurnOff;   
 
     // State
     private Quaternion _defaultRotation; // The rotation from the Editor
@@ -65,6 +67,11 @@ public class ToggleSwitch : BaseInteractable
         UpdateVisuals();
 
         OnToggle?.Invoke(isOn);
+
+        if (isOn)
+            OnTurnOn?.Invoke();
+        else
+            OnTurnOff?.Invoke();
 
         if (!silent)
         {

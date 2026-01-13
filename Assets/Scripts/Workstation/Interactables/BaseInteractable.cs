@@ -23,7 +23,7 @@ public abstract class BaseInteractable : MonoBehaviour, IInteractable
 
     public virtual void OnHoverEnter()
     {
-        Debug.Log("Focused");
+        //Debug.Log("Focused");
         var rend = gameObject.GetComponent<Renderer>();
         if (rend != null)
                 SelectionOutlineManager.Instance.Add(rend);
@@ -32,7 +32,7 @@ public abstract class BaseInteractable : MonoBehaviour, IInteractable
 
     public virtual void OnHoverExit()
     {
-        Debug.Log("Unfocused");
+        //Debug.Log("Unfocused");
         var rend = gameObject.GetComponent<Renderer>();
         if (rend != null)
                 SelectionOutlineManager.Instance.Remove(rend);

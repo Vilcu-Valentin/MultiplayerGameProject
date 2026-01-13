@@ -16,4 +16,19 @@ public class WorldStateDto
 
     [JsonPropertyName("maxWh")]
     public long MaxWh { get; set; }
+
+    [JsonPropertyName("activeEventName")]
+    public string ActiveEventName {  get; set;}
+
+    [JsonPropertyName("activeEventDescription")]
+    public string ActiveEventDescription {get; set;}
+
+    [JsonPropertyName("isPaused")]
+    public bool IsPaused { get; set; }
+
+    [JsonPropertyName("dasySurvived")]
+    public int DaysSurvived { get; set; }
+
+    [JsonPropertyName("serverTime")]
+    public string ServerTime { get; set; }
 }

@@ -1,7 +1,6 @@
 using System.Collections;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class SplitFlapUnit : MonoBehaviour
 {
@@ -14,8 +13,8 @@ public class SplitFlapUnit : MonoBehaviour
     [SerializeField] private TMP_Text bottomStaticText;
 
     [Header("References (Flipper)")]
-    [SerializeField] private Transform flipperPivot; // The parent that rotates
-    [SerializeField] private GameObject flipperContent; // To hide flipper when idle
+    [SerializeField] private Transform flipperPivot;
+    [SerializeField] private GameObject flipperContent;
     [SerializeField] private TMP_Text flipperFrontText;
     [SerializeField] private TMP_Text flipperBackText;
 
@@ -23,74 +22,82 @@ public class SplitFlapUnit : MonoBehaviour
 
     private void Start()
     {
-        // Initialization: Hide the moving flipper, set initial state
         flipperContent.SetActive(false);
         UpdateAllText(_currentChar);
     }
 
-    // Call this from your game manager
+    // Safety: Ensure nothing hangs if the object is disabled
+    private void OnDisable()
+    {
+        StopAllCoroutines();
+        ResetVisualState();
+    }
+
     public void FlipTo(char targetChar)
     {
+        // 1. Stop any existing animation immediately
+        StopAllCoroutines();
+
+        // 2. IMPORTANT: Force finish the previous state visually
+        // If we interrupted a flip, the visuals might be messy. Reset them.
+        ResetVisualState();
+
+        // 3. If we are just resetting to the same char, stop here
         if (_currentChar == targetChar) return;
 
-        // If we are already flipping, force finish or queue (simple version: stop and restart)
-        StopAllCoroutines();
+        // 4. Start the new flip
         StartCoroutine(FlipRoutine(targetChar));
+    }
+
+    private void ResetVisualState()
+    {
+        // Snap rotation back to 0
+        flipperPivot.localRotation = Quaternion.identity;
+        // Hide the flipper
+        flipperContent.SetActive(false);
+        // Ensure the static text matches the logical state
+        UpdateAllText(_currentChar);
     }
 
     private IEnumerator FlipRoutine(char targetChar)
     {
-        // 1. SETUP THE TEXTS
-        // Bottom Static: Stays as the OLD character (until the flap falls covering it)
+        // --- SETUP ---
+        // Bottom Static: Shows the OLD character
         bottomStaticText.text = _currentChar.ToString();
-
-        // Top Static: Shows the NEW character (revealed when flap falls)
+        // Top Static: Shows the NEW character immediately (revealed behind the flap)
         topStaticText.text = targetChar.ToString();
 
         // Flipper Front: The face falling down (Old Character Top)
         flipperFrontText.text = _currentChar.ToString();
-
         // Flipper Back: The face coming down (New Character Bottom)
         flipperBackText.text = targetChar.ToString();
 
-        // 2. PREPARE ANIMATION
         flipperContent.SetActive(true);
         flipperPivot.localRotation = Quaternion.Euler(0, 0, 0);
 
+        // --- ANIMATION ---
         float timer = 0f;
-
-        // 3. ANIMATE
         while (timer < flipDuration)
         {
             timer += Time.deltaTime;
             float progress = timer / flipDuration;
-
-            // Evaluate curve for smooth "mechanical" feel
-            float angle = flipCurve.Evaluate(progress) * -180f; // Rotate from 0 to 180
-
+            float angle = flipCurve.Evaluate(progress) * -180f;
             flipperPivot.localRotation = Quaternion.Euler(angle, 0, 0);
-
             yield return null;
         }
 
-        // 4. CLEANUP
-        // Snap to final state
-        flipperPivot.localRotation = Quaternion.Euler(0, 0, 0); // Reset rotation
-        flipperContent.SetActive(false); // Hide flipper
-
-        // Update the static top to match the new reality
-        bottomStaticText.text = targetChar.ToString();
-
+        // --- FINISH ---
+        // Commit the change
         _currentChar = targetChar;
+        ResetVisualState();
     }
 
-    // Helper to force set text without animation
     public void UpdateAllText(char c)
     {
         _currentChar = c;
-        topStaticText.text = c.ToString();
-        bottomStaticText.text = c.ToString();
-        flipperFrontText.text = c.ToString();
-        flipperBackText.text = c.ToString();
+        if (topStaticText) topStaticText.text = c.ToString();
+        if (bottomStaticText) bottomStaticText.text = c.ToString();
+        if (flipperFrontText) flipperFrontText.text = c.ToString();
+        if (flipperBackText) flipperBackText.text = c.ToString();
     }
 }
